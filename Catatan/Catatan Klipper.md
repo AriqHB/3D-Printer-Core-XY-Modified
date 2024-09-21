@@ -47,6 +47,108 @@
       ```
     
     - Pastikan **serial mcu** di `generic.cfg` disesuaikan dengan yang ada di `printer.cfg`.
+
+# Catatan untuk [stepper]
+
+**1. Pengaturan Pin**
+  
+  Terbagi menjadi tiga step_pin; dir_pin; enable_pin. Untuk pin yang dipakai bisa dilihat pada gambar pin mikrokontroler.
+  
+  - **step_pin**: untuk mengirimkan sinyal langkah (step) ke driver motor stepper. Setiap kali sinyal step ini berubah dari rendah (low) ke tinggi (high), motor stepper akan bergerak satu langkah.
+    
+  -	**dir_pin**: untuk mengontrol arah rotasi motor stepper. Ketika pin ini dalam kondisi rendah (low), motor akan bergerak ke satu arah jarum jam (misalnya, maju); ketika pin dalam kondisi tinggi (high), motor akan bergerak ke arah yang berlawanan (misalnya, mundur)
+    
+    ```
+    Tanda seru (!): menunjukkan bahwa logika dari pin tersebut terbalik. Dalam contoh di atas, pin PB4 akan menonaktifkan driver jika dalam kondisi tinggi (high) dan mengaktifkannya jika dalam kondisi rendah (low).
+    ```
+  -	**enable_pin**: untuk mengaktifkan atau menonaktifkan driver motor stepper. Ketika enable_pin berada dalam kondisi aktif (biasanya logika rendah, tergantung driver), motor akan siap untuk menerima sinyal step dan dir. Ketika dalam kondisi tidak aktif, motor akan dinonaktifkan, sehingga tidak menerima sinyal gerakan.
+
+**2. Rotation Distance**
+    
+  Nilai ini menggambarkan jarak yang ditempuh oleh sumbu berdasarkan satu putaran penuh motor stepper.
+  
+  ```
+  rotation_distance(xy): 32 mm
+  rotation_distance(z): 8 mm
+  ``` 
+
+**3. Microsteps**
+
+  `microsteps: 16`
+  
+  Microstepping meningkatkan resolusi gerakan motor dengan membagi setiap langkah penuh menjadi beberapa langkah kecil.
+
+**4. Full Steps Per Rotation**
+
+  `full_steps_per_rotation: 200`
+
+  Motor NEMA 17 biasanya memiliki 200 langkah per putaran penuh, yang setara dengan langkah 1,8 derajat per langkah.
+
+**5. Gear Ratio**
+
+`gear_ratio: Tidak digunakan`
+
+  Jika tidak ada gearbox yang terpasang, parameter ini tidak perlu diatur.
+
+**6. Step Pulse Duration**
+
+`step_pulse_duration: Sudah diatur`
+
+  Parameter ini mengatur durasi pulsa untuk sinyal langkah, penting untuk memastikan sinyal diterima dengan baik oleh driver.
+
+**7. Endstop Pin**
+```
+endstop_pin: tmc2209_stepper_x:virtual_endstop
+endstop_pin: tmc2209_stepper_y:virtual_endstop
+endstop_pin: tmc2209_stepper_z:virtual_endstop
+```
+  Menggunakan sensorless homing, yang berarti tidak memerlukan switch endstop fisik.
+
+**8. Position Min dan Max**
+
+```
+position_min: 0 mm
+position_max: 450 mm
+```
+  Menentukan batas minimum dan maksimum posisi sumbu, penting untuk mencegah gerakan di luar jangkauan fisik printer.
+
+**9. Posisition Endstop**
+
+`position_endstop: 0`
+  
+  Menandakan bahwa titik endstop berada di posisi awal printer.
+
+**10. Homing Speed**
+
+`homing_speed: 5 mm/s`
+
+  Kecepatan saat proses homing, di mana motor mencari posisi nol.
+
+
+**11. Homing Retract Distance**
+
+`homing_retract_dist: 5` 
+  
+  Jarak untuk mundur (dalam mm) sebelum melakukan homing kedua. Default-nya adalah 5 mm, yang memberikan akurasi lebih baik saat homing ulang:
+
+**12. Homing Retract Speed**
+
+  homing_retract_speed: Kecepatan yang digunakan saat sumbu bergerak mundur setelah menyentuh endstop selama homing. Jika parameter ini tidak ditentukan, akan menggunakan homing_speed secara default. Untuk konsistensi, bisa menggunakan kecepatan yang sama:
+
+`homing_retract_speed: 5.0`(default sama dengan homing_speed)
+
+**13. Second Homing Speed**
+
+  second_homing_speed: Kecepatan yang digunakan saat melakukan homing kedua untuk meningkatkan akurasi. Default-nya adalah setengah dari homing_speed:
+
+`second_homing_speed: 2.5`
+
+**14. Homing Positive Direction**
+
+  homing_positive_dir: Menentukan apakah homing akan menyebabkan stepper bergerak ke arah positif (menjauhi nol). Default-nya adalah true jika position_endstop berada di dekat position_max, dan false jika di dekat position_min. Tidak perlu diubah kecuali ada kebutuhan khusus:
+
+`homing_positive_dir: true`  (default)
+
 # Catatan Rotation Distance dan Micro Steps untuk 3D Printer Core XY Modifikasi
 
 ## 1. Apa Itu Rotation Distance?
