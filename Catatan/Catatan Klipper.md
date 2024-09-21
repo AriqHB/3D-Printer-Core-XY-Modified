@@ -1,5 +1,7 @@
 # Catatan Klipper Documentation 3D Printer Core XY Modifikasi Sumbu Z
 
+![Gambar PIN SKR Mini E3 V3][https://github.com/AriqHB/3D-Printer-Core-XY-Modified/blob/main/Foto/PIN%20BTT%20SKR%20MINI%20E3%20V3.png]
+
 1. **Menyalakan Printer dan Menghubungkan Mikrokontroler**
     - Setiap kali menyalakan printer, Anda harus menyalakan WSL (Windows Subsystem for Linux) dan menghubungkan mikrokontroler melalui command prompt.
     
@@ -100,3 +102,6 @@ Microstepping **tidak mengubah** nilai **rotation distance** yang dihitung. Klip
 ## Sumber Referensi:
 - [Klipper Documentation: Rotation Distance](https://www.klipper3d.org/Rotation_Distance.html)
 - [Klipper Documentation: Stepper Motor](https://www.klipper3d.org/Steppers.html)
+
+
+[https://github.com/AriqHB/3D-Printer-Core-XY-Modified/blob/main/Foto/PIN%20BTT%20SKR%20MINI%20E3%20V3.png]: https://github.com/AriqHB/3D-Printer-Core-XY-Modified/blob/main/Foto/PIN%20BTT%20SKR%20MINI%20E3%20V3.png
