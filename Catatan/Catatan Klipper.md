@@ -1,7 +1,8 @@
-# Catatan Klipper Documentation 3D Printer Core XY Modifikasi Sumbu Z
-
 ![Gambar PIN SKR Mini E3 V3][https://github.com/AriqHB/3D-Printer-Core-XY-Modified/blob/main/Foto/PIN%20BTT%20SKR%20MINI%20E3%20V3.png]
 [Sumber gambar](https://github.com/bigtreetech/BIGTREETECH-SKR-mini-E3/blob/master/hardware/BTT%20SKR%20MINI%20E3%20V3.0/Hardware/BTT%20E3%20SKR%20MINI%20V3.0_PIN.pdf)
+
+# Catatan Klipper Documentation 3D Printer Core XY Modifikasi Sumbu Z
+
 1. **Menyalakan Printer dan Menghubungkan Mikrokontroler**
     - Setiap kali menyalakan printer, Anda harus menyalakan WSL (Windows Subsystem for Linux) dan menghubungkan mikrokontroler melalui command prompt.
     
