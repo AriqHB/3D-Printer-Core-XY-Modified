@@ -48,6 +48,8 @@
     
     - Pastikan **serial mcu** di `generic.cfg` disesuaikan dengan yang ada di `printer.cfg`.
 
+---
+
 # Catatan untuk [stepper]
 
 **1. Pengaturan Pin**
@@ -149,6 +151,8 @@ position_max: 450 mm
 
 `homing_positive_dir: true`  (default)
 
+---
+
 # Catatan Rotation Distance dan Micro Steps untuk 3D Printer Core XY Modifikasi
 
 ## 1. Apa Itu Rotation Distance?
@@ -201,6 +205,50 @@ Dengan **microstepping**:
 Microstepping **tidak mengubah** nilai **rotation distance** yang dihitung. Klipper secara otomatis memperhitungkan microsteps dalam perhitungannya, sehingga Anda hanya perlu mengatur rotation distance berdasarkan mekanisme fisik printer (belt dan lead screw), sedangkan microstepping diatur melalui driver.
 
 ---
+# Konfigurasi TMC2209 untuk Extruder
+
+## 1. Pengaturan Pin UART
+Setiap driver **TMC2209** membutuhkan pengaturan pin UART yang benar untuk komunikasi dengan firmware Klipper. Berikut adalah penjelasan dari pin-pin yang digunakan:
+
+- **uart_pin**: Menentukan pin fisik pada papan kontrol (**SKR Mini E3 V3**) yang terhubung ke **UART interface** dari driver stepper motor TMC2209. UART memungkinkan komunikasi dua arah antara firmware dan driver, sehingga parameter seperti arus motor dan mode **StealthChop** dapat dikontrol secara dinamis.
+  
+- **tx_pin**: Pin untuk mengirim data dari Klipper ke driver TMC2209. Data yang dikirim dapat berupa perubahan arus motor atau kecepatan ekstruder secara dinamis.
+
+Contoh konfigurasi pada Klipper:
+```ini
+uart_pin: (nama pin uart dari datasheet SKR Mini E3 V3)
+tx_pin: (nama pin tx dari datasheet SKR Mini E3 V3)
+```
+
+## 2. Alamat UART (uart_address)
+- Setiap driver **TMC2209** dapat memiliki alamat UART yang unik jika beberapa driver terhubung pada sistem yang sama.
+- Pada ekstruder, misalnya, menggunakan:
+  ```ini
+  uart_address: 0
+  uart_address: 1
+  uart_address: 2
+  ```
+  Ini menunjukkan bahwa driver **TMC2209** untuk ekstruder menggunakan alamat UART 3. Klipper akan mengirim sinyal ke driver ini untuk mengatur parameter ekstruder.
+
+## 3. Arus Operasional (run_current)
+- **run_current**: Mengontrol arus maksimum yang diberikan ke motor stepper selama operasi. Ini penting untuk menghindari panas berlebih pada motor sambil tetap memberikan daya yang cukup untuk pengoperasian.
+- Untuk motor dengan arus maksimum **1.7 Ampere**, run_current bisa diatur antara **1.2A hingga 1.4A**. Sebagai contoh:
+  ```ini
+  run_current: 1.200
+  ```
+- Setelah diatur, penting untuk memantau suhu motor. Jika terlalu panas, arus ini mungkin perlu diturunkan lebih lanjut.
+
+## 4. Mode StealthChop (stealthchop_threshold)
+- **StealthChop** adalah mode operasi yang membuat motor stepper lebih tenang, terutama pada kecepatan rendah, dengan mengurangi getaran dan kebisingan.
+- Pada ekstruder, Anda dapat mengatur:
+  ```
+  stealthchop_threshold: 999999
+  ```
+  Nilai ini memastikan bahwa **StealthChop** selalu aktif, bahkan pada kecepatan ekstruder yang sangat tinggi. Namun, pada kecepatan tinggi, Anda mungkin ingin menggunakan **spreadCycle** untuk lebih banyak torsi dan daya.
+
+### Catatan:
+- Konfigurasi di atas menggunakan **TMC2209** dengan **motor Nema 17**, disesuaikan dengan pengaturan yang optimal untuk menggerakkan ekstruder pada sistem 3D printer.
+
 
 ## Sumber Referensi:
 - [Klipper Documentation: Rotation Distance](https://www.klipper3d.org/Rotation_Distance.html)
