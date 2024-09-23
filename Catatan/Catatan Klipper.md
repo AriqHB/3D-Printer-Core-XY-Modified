@@ -250,7 +250,153 @@ tx_pin: (nama pin tx dari datasheet SKR Mini E3 V3)
 - Konfigurasi di atas menggunakan **TMC2209** dengan **motor Nema 17**, disesuaikan dengan pengaturan yang optimal untuk menggerakkan ekstruder pada sistem 3D printer.
 
 
+Berikut adalah **penulisan ulang G-code macros** yang disesuaikan dengan konfigurasi printer 3D CoreXY Anda berdasarkan pengaturan yang telah Anda berikan. Penyesuaian ini memperhitungkan penggunaan motor untuk menggerakkan extruder (bukan bed), penghilangan kontrol suhu, serta penggunaan endstop virtual dengan driver TMC2209 tanpa sensor homing fisik.
+
+---
+
+## G-code Macros yang Diperbarui
+
+### 1. **[gcode_macro PARK]**
+
+```ini
+[gcode_macro PARK]
+gcode:
+    {% set th = printer.toolhead %}
+    # Memindahkan extruder ke posisi parkir di tengah area kerja dan mengangkat ke ketinggian 30 mm
+    G0 X{th.axis_maximum.x / 2} Y{th.axis_maximum.y / 2} Z30 #F3000
+```
+
+**Penjelasan:**
+- **Tujuan:** Memindahkan extruder ke posisi tengah area kerja (X dan Y) dan mengangkatnya ke ketinggian 30 mm untuk memastikan posisi aman setelah pencetakan.
+- **Perubahan:** Menambahkan kecepatan gerakan (`F3000`) untuk memastikan gerakan yang cepat dan efisien.
+
+---
+
+### 2. **[gcode_macro G32]**
+
+```ini
+[gcode_macro G32]
+gcode:
+    # Menyimpan keadaan saat ini sebelum leveling
+    SAVE_GCODE_STATE NAME=STATE_G32
+    
+    # Mengatur posisi absolut
+    G90
+    
+    # Melakukan homing semua sumbu menggunakan endstop virtual
+    G28
+    
+    # Melakukan homing ulang setelah leveling
+    G28
+    
+    # Memarkir extruder setelah leveling
+    PARK
+    
+    # Mengembalikan keadaan printer seperti sebelum leveling
+    RESTORE_GCODE_STATE NAME=STATE_G32
+```
+
+**Penjelasan:**
+- **Tujuan:** Melakukan proses homing dan leveling gantry secara otomatis untuk memastikan akurasi posisi extruder sebelum pencetakan dimulai.
+- **Perubahan:** Tidak ada perubahan signifikan selain memastikan penggunaan endstop virtual sesuai dengan konfigurasi Anda.
+
+---
+
+### 3. **[gcode_macro PRINT_START]**
+
+```ini
+[gcode_macro PRINT_START]
+# Digunakan sebagai skrip awal untuk memulai pencetakan - sesuaikan sesuai slicer pilihan Anda
+gcode:
+    # Melakukan homing dan leveling gantry
+    G32                            ; home all axes dan leveling gantry
+    
+    # Mengatur posisi absolut
+    G90                            ; absolute positioning
+    
+    # Mengangkat extruder ke ketinggian 20 mm dari posisi awal
+    G1 Z20 F3000                   ; move extruder away from initial position
+```
+
+**Penjelasan:**
+- **Tujuan:** Menyiapkan printer untuk memulai pencetakan dengan memastikan semua sumbu berada pada posisi yang benar dan extruder berada pada ketinggian aman.
+- **Perubahan:** Mengganti komentar dari "nozzle" menjadi "extruder" untuk mencerminkan perubahan fungsional pada konfigurasi Anda.
+
+---
+
+### 4. **[gcode_macro PRINT_END]**
+
+```ini
+[gcode_macro PRINT_END]
+# Digunakan sebagai skrip akhir setelah pencetakan selesai - sesuaikan sesuai slicer pilihan Anda
+gcode:
+    # Menghitung posisi aman untuk menghindari masalah saat memarkir extruder
+    {% set th = printer.toolhead %}
+    {% set x_safe = th.position.x + (20 if (th.axis_maximum.x - th.position.x > 20) else -20) %}
+    {% set y_safe = th.position.y + (20 if (th.axis_maximum.y - th.position.y > 20) else -20) %}
+    {% set z_safe = min(th.position.z + 2, th.axis_maximum.z) %}
+    
+    # Menyimpan keadaan saat ini sebelum melakukan tindakan akhir
+    SAVE_GCODE_STATE NAME=STATE_PRINT_END
+    
+    # Menunggu hingga semua perintah dalam buffer selesai
+    M400                           ; wait for buffer to clear
+    
+    # Nonaktifkan kontrol suhu karena tidak diperlukan
+    TURN_OFF_HEATERS               ; mematikan semua pemanas
+    
+    # Mengatur posisi absolut
+    G90                            ; absolute positioning
+    
+    # Memindahkan extruder ke posisi aman untuk menghindari stringing
+    G0 X{x_safe} Y{y_safe} Z{z_safe} F20000  ; move extruder to safe coordinates
+    
+    # Memarkir extruder ke posisi belakang area kerja
+    G0 X{th.axis_maximum.x / 2} Y{th.axis_maximum.y - 2} F3600  ; park extruder at rear
+    
+    # Mematikan kipas pendingin
+    M107                           ; turn off fan
+    
+    
+    # Mengembalikan keadaan printer seperti sebelum PRINT_END
+    RESTORE_GCODE_STATE NAME=STATE_PRINT_END MOVE=0
+```
+
+**Penjelasan:**
+- **Tujuan:** Menyelesaikan proses pencetakan dengan memindahkan extruder ke posisi aman, mematikan komponen yang tidak diperlukan, dan memastikan printer siap untuk pencetakan berikutnya.
+- **Perubahan Utama:**
+  - **Menghapus Perintah Filament:** Karena Anda tidak menggunakan filament, perintah `G92 E0` dan `G1 E-5.0 F1800` dihapus.
+  - **Menyesuaikan Komentar:** Mengubah istilah dari "nozzle" menjadi "extruder" untuk mencerminkan fungsionalitas yang telah dimodifikasi.
+  - **Pengaturan Posisi Aman:** Memastikan extruder dipindahkan ke posisi yang aman berdasarkan batas maksimal yang telah dikonfigurasi (45 cm).
+  - **Menghapus Kontrol Suhu:** Karena suhu tidak diperlukan, perintah terkait suhu dihilangkan atau dinonaktifkan.
+
+---
+
+## Catatan Tambahan
+
+### 1. **Penggunaan Endstop Virtual**
+- Dalam konfigurasi Anda, endstop fisik tidak digunakan. Sebagai gantinya, **endstop virtual** digunakan bersama dengan driver TMC2209.
+
+### 2. **Kontrol Extruder**
+- Karena extruder Anda digunakan untuk mengeluarkan mortar tanpa kontrol suhu, semua perintah terkait suhu dan pengaturan filament telah dihapus dari macros.
+- Pastikan bahwa motor extruder diatur dengan benar untuk mengendalikan aliran mortar sesuai kebutuhan aplikasi Anda.
+
+### 3. **Keamanan Gerakan**
+- Pastikan bahwa kecepatan dan akselerasi yang digunakan dalam G-code macros sesuai dengan kemampuan mekanik printer Anda untuk mencegah kerusakan atau ketidaktepatan posisi.
+- Selalu uji macros secara bertahap dan lakukan kalibrasi jika diperlukan untuk memastikan bahwa semua gerakan berjalan sesuai harapan.
+
+### 4. **Penyesuaian Kecepatan dan Posisi**
+- **Kecepatan Gerakan (`F` parameter):** Anda dapat menyesuaikan kecepatan gerakan (misalnya, `F3000` atau `F20000`) sesuai dengan kebutuhan spesifik dan kemampuan mekanik printer Anda.
+- **Posisi Parkir:** Pastikan bahwa posisi parkir (`X`, `Y`, `Z`) aman dan tidak mengganggu bagian lain dari printer atau area kerja.
+
+### 5. **Dokumentasi dan Backup**
+- **Backup Konfigurasi:** Selalu simpan salinan cadangan dari konfigurasi dan G-code macros Anda sebelum melakukan perubahan besar.
+- **Dokumentasi:** Dokumentasikan setiap perubahan yang Anda lakukan untuk referensi di masa depan atau untuk anggota tim lainnya.
+
+---
+
 ## Sumber Referensi:
+- [Klipper Documentation: G-Codes](https://www.klipper3d.org/G-Codes.html)
 - [Klipper Documentation: Rotation Distance](https://www.klipper3d.org/Rotation_Distance.html)
 - [Klipper Documentation: Stepper Motor](https://www.klipper3d.org/Steppers.html)
 
